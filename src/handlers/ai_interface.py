@@ -341,8 +341,9 @@ class AIInterface(BaseHandler):
         time_range: str,
         summary_type: str = 'brief'
     ) -> Dict:
-        """Summarize chat history"""
+        """使用三层递归架构总结聊天历史"""
         try:
+            # 获取消息
             messages = await self.message_db.query_messages(
                 filter_dict=self.filter_handler.create_filter_dict(time_range=time_range)
             )
@@ -350,17 +351,58 @@ class AIInterface(BaseHandler):
             if not messages.get('results'):
                 return {
                     "success": False,
-                    "message": "No messages found for the specified time range"
+                    "message": "指定时间范围内未找到消息记录"
                 }
-                
-            summary = await self.summarizer.summarize_messages(
+            
+            # 1. 基于token限制分块
+            chunks = await self.chunker.split_by_tokens(
                 messages=messages['results'],
-                summary_type=summary_type
+                max_tokens=3000
+            )
+            
+            # 2. 第一层：基础块总结
+            base_summaries = await self.summarizer.summarize_layer1(chunks)
+            if not base_summaries:
+                return {
+                    "success": False,
+                    "message": "生成基础总结失败"
+                }
+            
+            # 3. 第二层：主题合并总结
+            topic_summaries = await self.summarizer.summarize_layer2(base_summaries)
+            if not topic_summaries:
+                return {
+                    "success": False,
+                    "message": "生成主题总结失败"
+                }
+            
+            # 4. 第三层：最终总结
+            final_summary = await self.summarizer.summarize_layer3(topic_summaries)
+            if not final_summary:
+                return {
+                    "success": False,
+                    "message": "生成最终总结失败"
+                }
+            
+            # 5. 格式化响应
+            formatted_summary = await self.formatter.format_response(
+                content=final_summary['content'],
+                template_key='summary',
+                time_range=time_range,
+                message_count=final_summary['message_count'],
+                topic_count=final_summary.get('topic_count', 1)
             )
             
             return {
                 "success": True,
-                "summary": summary
+                "summary": formatted_summary,
+                "stats": {
+                    "chunks": len(chunks),
+                    "base_summaries": len(base_summaries),
+                    "topic_summaries": len(topic_summaries),
+                    "total_messages": final_summary['message_count'],
+                    "time_range": final_summary['time_range']
+                }
             }
             
         except Exception as e:
