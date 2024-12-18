@@ -1,0 +1,74 @@
+sequenceDiagram
+    participant Client
+    participant CM as MessageChunker
+    participant TM as TokenManager
+    participant RS as RecursiveSummarizer
+    participant LH as LanguageHandler
+    participant Cache
+    participant MC as MetricsCollector
+
+    Client->>CM: 请求总结历史消息
+    activate CM
+    CM->>TM: calculate_tokens(messages)
+    TM-->>CM: token_count
+
+    CM->>Cache: get_cached_chunks(messages_hash)
+    alt 缓存命中
+        Cache-->>CM: cached_chunks
+    else 缓存未命中
+        CM->>CM: split_by_tokens(messages, 3000)
+        CM->>Cache: cache_chunks(chunks)
+    end
+
+    loop 对每个分块并行处理
+        CM->>RS: summarize_layer1(chunk)
+        activate RS
+        RS->>Cache: get_cached_summary(chunk_hash)
+        alt 缓存命中
+            Cache-->>RS: cached_summary
+        else 缓存未命中
+            RS->>RS: generate_summary(chunk)
+            RS->>Cache: cache_summary(summary)
+        end
+        RS-->>CM: chunk_summary
+        deactivate RS
+    end
+
+    CM->>RS: summarize_layer2(chunk_summaries)
+    activate RS
+    RS->>RS: merge_by_topic(summaries)
+    RS-->>CM: topic_summaries
+    deactivate RS
+
+    CM->>RS: summarize_layer3(topic_summaries)
+    activate RS
+    RS->>RS: generate_final_summary()
+    RS-->>CM: final_summary
+    deactivate RS
+
+    CM->>LH: format_response(summary)
+    activate LH
+    LH->>LH: detect_lang(client_message)
+    LH->>LH: apply_language_template()
+    LH-->>CM: formatted_summary
+    deactivate LH
+
+    CM->>MC: record_metrics()
+    CM-->>Client: 返回总结结果
+    deactivate CM
+
+    Client->>LH: 发送消息
+    activate LH
+    LH->>LH: detect_lang(message)
+    LH->>Cache: get_cached_lang(text_hash)
+    alt 缓存命中
+        Cache-->>LH: cached_lang
+    else 缓存未命中
+        LH->>LH: analyze_language(message)
+        LH->>Cache: cache_lang_result()
+    end
+
+    LH->>LH: format_response(content, detected_lang)
+    LH->>MC: record_lang_metrics()
+    LH-->>Client: 返回格式化响应
+    deactivate LH
