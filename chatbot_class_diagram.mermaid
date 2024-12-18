@@ -1,0 +1,76 @@
+classDiagram
+    class MessageHandler {
+        +handle_message(msg: Message) Response
+        +route_command(cmd: str) Handler
+    }
+
+    class SummaryHandler {
+        -template_engine: TemplateEngine
+        -cache: Cache
+        +summarize_history(time_range: DateRange) Summary
+        +summarize_topic(topic: str) Summary
+        +get_auto_summary() Summary
+        -extract_key_points(messages: List[Message]) List[Point]
+    }
+
+    class SearchHandler {
+        -vector_db: VectorDB
+        -filter_engine: FilterEngine
+        +semantic_search(query: str) List[Message]
+        +filter_messages(filters: Dict) List[Message]
+        +find_similar(msg: Message) List[Message]
+        -rank_results(results: List[Message]) List[Message]
+    }
+
+    class AdvisorEngine {
+        -suggestion_model: Model
+        -context: Context
+        +generate_suggestion(query: str) Suggestion
+        +recommend_solutions(problem: str) List[Solution]
+        +handle_followup(question: str) Response
+        -analyze_context(query: str) Context
+    }
+
+    class AnalyticsEngine {
+        -metrics_calculator: Calculator
+        -data_store: DataStore
+        +evaluate_quality(messages: List[Message]) Quality
+        +analyze_activity() ActivityReport
+        +get_topic_trends() List[Trend]
+        +get_user_engagement() EngagementReport
+    }
+
+    class VectorDB {
+        -index: Index
+        -embeddings: Dict
+        +upsert(doc: Document)
+        +search(query: Vector) List[Document]
+        +delete(doc_id: str)
+        -update_index()
+    }
+
+    class Cache {
+        -store: Redis
+        +get(key: str) Any
+        +set(key: str, value: Any)
+        +delete(key: str)
+        +expire(key: str, seconds: int)
+    }
+
+    class Context {
+        -messages: List[Message]
+        -user_info: UserInfo
+        -settings: Dict
+        +update(msg: Message)
+        +clear()
+    }
+
+    MessageHandler --> SummaryHandler
+    MessageHandler --> SearchHandler
+    MessageHandler --> AdvisorEngine
+    MessageHandler --> AnalyticsEngine
+    SummaryHandler --> Cache
+    SearchHandler --> VectorDB
+    AdvisorEngine --> Context
+    AnalyticsEngine ..> VectorDB
+    SummaryHandler ..> VectorDB
