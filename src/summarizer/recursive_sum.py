@@ -214,3 +214,16 @@ class RecursiveSummarizer:
         except Exception as e:
             logger.error(f"Error generating final summary: {str(e)}")
             return None
+[
+    {
+        "command_name": "Engineer2.write_new_code",
+        "args": {
+            "description": "实现语言处理模块：\n1. LanguageDetector：语言检测和识别\n2. ResponseFormatter：响应格式化和本地化",
+            "paths": [
+                "src/language/detector.py",
+                "src/language/formatter.py",
+                "src/language/templates.py"
+            ]
+        }
+    }
+]
