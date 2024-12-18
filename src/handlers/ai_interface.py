@@ -226,23 +226,26 @@ class AIInterface(BaseHandler):
                 messages=[
                     {
                         "role": "system",
-                        "content": """You are an AI assistant with these capabilities:
-                        1. Summarize chat history
-                        2. Search messages
-                        3. Provide suggestions
-                        4. Analyze chat activity
-                        5. Manage user tracking
+                        "content": f"""你是一个智能助手，具备以下功能：
+                        1. 总结聊天历史 - 使用三层递归架构生成准确的总结
+                        2. 消息搜索 - 支持语义搜索和关键词过滤
+                        3. 智能建议 - 基于上下文提供建议
+                        4. 活动分析 - 生成聊天数据洞察
+                        5. 用户管理 - 处理用户跟踪和消息删除
                         
-                        Understand user needs and use appropriate functions.
-                        Respond in a friendly and helpful manner."""
+                        检测到用户语言：{detected_lang}。优先使用中文回复，如果是其他语言则使用相应语言。
+                        分析用户需求并使用最合适的功能。
+                        保持友好和专业的交流方式。"""
                     },
                     {
                         "role": "user",
-                        "content": f"User: {user}\nMessage: {content}"
+                        "content": f"用户: {user}\n消息: {content}"
                     }
                 ],
                 tools=self.tools,
-                tool_choice="auto"
+                tool_choice="auto",
+                temperature=0.7,
+                max_tokens=1000
             )
             
             message = response.choices[0].message
