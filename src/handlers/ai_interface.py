@@ -192,10 +192,20 @@ class AIInterface(BaseHandler):
         try:
             content = content.replace('@茧房爬楼王', '').strip()
             
+            # 检测消息语言
+            detected_lang = await self.lang_detector.detect_language(content)
+            
             if not content:
+                # 根据检测到的语言返回欢迎消息
+                welcome_msg = await self.formatter.format_response(
+                    content="我可以帮你：\n- 总结聊天历史\n- 搜索历史消息\n- 提供智能建议\n- 分析聊天活动\n请问需要什么帮助？",
+                    template_key='greeting',
+                    detected_lang=detected_lang
+                )
                 return {
                     "success": True,
-                    "response": "Hello! I can help you with:\n- Summarizing chat history\n- Searching messages\n- Providing suggestions\n- Analyzing chat activity\nWhat would you like to do?"
+                    "response": welcome_msg,
+                    "detected_lang": detected_lang
                 }
                 
             # Check user status
