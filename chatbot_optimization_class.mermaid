@@ -1,0 +1,58 @@
+classDiagram
+    class TokenManager {
+        +calculate_tokens(text: str) int
+        +estimate_chinese_tokens(text: str) int
+        +check_limit(text: str, limit: int) bool
+        -count_chars(text: str) dict
+    }
+
+    class MessageChunker {
+        -token_manager: TokenManager
+        -cache: Cache
+        +split_by_time(messages: List, hours: int) List
+        +split_by_topic(messages: List) List
+        +split_by_tokens(messages: List, max_tokens: int) List
+        -analyze_topic_boundary(messages: List) List
+    }
+
+    class RecursiveSummarizer {
+        -token_manager: TokenManager
+        -cache: Cache
+        +summarize_layer1(chunks: List) List
+        +summarize_layer2(summaries: List) List
+        +summarize_layer3(topic_sums: List) Summary
+        -merge_summaries(sums: List) Summary
+    }
+
+    class LanguageHandler {
+        -detector: LanguageDetector
+        -formatter: ResponseFormatter
+        +detect_lang(text: str) str
+        +format_response(content: str, lang: str) str
+        -get_template(key: str, lang: str) str
+    }
+
+    class Cache {
+        -redis: Redis
+        +get_summary(key: str) Summary
+        +set_summary(key: str, summary: Summary)
+        +get_language(text_hash: str) str
+        +set_language(text_hash: str, lang: str)
+    }
+
+    class MetricsCollector {
+        -store: TimeSeriesDB
+        +record_processing_time(operation: str, time: float)
+        +record_token_usage(count: int)
+        +record_language_detection(success: bool)
+        +get_performance_stats() Stats
+    }
+
+    MessageChunker --> TokenManager
+    RecursiveSummarizer --> TokenManager
+    MessageChunker --> Cache
+    RecursiveSummarizer --> Cache
+    LanguageHandler --> Cache
+    MessageChunker ..> MetricsCollector
+    RecursiveSummarizer ..> MetricsCollector
+    LanguageHandler ..> MetricsCollector
