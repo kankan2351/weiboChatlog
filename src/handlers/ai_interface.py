@@ -208,15 +208,19 @@ class AIInterface(BaseHandler):
                     "detected_lang": detected_lang
                 }
                 
-            # Check user status
+            # 检查用户状态
             if status := self.get_user_status(user):
                 if status['status'] == 'blocked':
                     return {
                         "success": False,
-                        "response": f"User {user} is currently blocked."
+                        "response": await self.formatter.format_response(
+                            content=f"用户 {user} 已被禁止访问",
+                            template_key='error',
+                            detected_lang=detected_lang
+                        )
                     }
                     
-            # Generate response
+            # 生成回复
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
