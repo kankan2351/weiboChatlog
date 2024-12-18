@@ -1,0 +1,68 @@
+sequenceDiagram
+    participant User
+    participant MH as MessageHandler
+    participant SH as SummaryHandler
+    participant SE as SearchHandler
+    participant AE as AdvisorEngine
+    participant AN as AnalyticsEngine
+    participant VDB as VectorDB
+    participant Cache
+    participant LLM as OpenAI
+
+    %% 历史内容总结流程
+    User->>MH: 请求总结(@bot 总结)
+    activate MH
+    MH->>SH: summarize_history(time_range)
+    activate SH
+    SH->>Cache: get(summary_key)
+    Cache-->>SH: cache_hit/miss
+    alt cache miss
+        SH->>VDB: search(time_range)
+        VDB-->>SH: messages
+        SH->>LLM: generate_summary(messages)
+        LLM-->>SH: summary
+        SH->>Cache: set(summary_key)
+    end
+    SH-->>MH: Summary
+    deactivate SH
+    MH-->>User: 总结内容
+    deactivate MH
+
+    %% 内容查询流程
+    User->>MH: 搜索请求(@bot 查询)
+    activate MH
+    MH->>SE: semantic_search(query)
+    activate SE
+    SE->>VDB: search(query_vector)
+    VDB-->>SE: similar_docs
+    SE-->>MH: SearchResults
+    deactivate SE
+    MH-->>User: 搜索结果
+    deactivate MH
+
+    %% 建议生成流程
+    User->>MH: 请求建议(@bot 建议)
+    activate MH
+    MH->>AE: generate_suggestion(query)
+    activate AE
+    AE->>VDB: search(context)
+    VDB-->>AE: relevant_data
+    AE->>LLM: generate_advice(data)
+    LLM-->>AE: suggestions
+    AE-->>MH: Suggestions
+    deactivate AE
+    MH-->>User: 建议内容
+    deactivate MH
+
+    %% 数据分析流程
+    User->>MH: 分析请求(@bot 分析)
+    activate MH
+    MH->>AN: analyze_activity()
+    activate AN
+    AN->>VDB: fetch_data(criteria)
+    VDB-->>AN: historical_data
+    AN->>AN: calculate_metrics()
+    AN-->>MH: AnalyticsReport
+    deactivate AN
+    MH-->>User: 分析报告
+    deactivate MH
