@@ -250,7 +250,7 @@ class AIInterface(BaseHandler):
             
             message = response.choices[0].message
             
-            # Handle function calls
+            # 处理工具调用
             if message.tool_calls:
                 responses = []
                 for tool_call in message.tool_calls:
@@ -268,23 +268,43 @@ class AIInterface(BaseHandler):
                                     details=str(result)
                                 )
                                 
-                                # Format response based on function
+                                # 根据功能类型格式化响应
                                 if 'summary' in result:
-                                    responses.append(f"Summary:\n{result['summary']}")
+                                    responses.append(await self.formatter.format_response(
+                                        content=result['summary'],
+                                        template_key='summary',
+                                        detected_lang=detected_lang
+                                    ))
                                 elif 'suggestions' in result:
-                                    responses.append("Suggestions:")
-                                    for i, sugg in enumerate(result['suggestions'], 1):
-                                        responses.append(f"{i}. {sugg['suggestion']}")
+                                    suggestions = '\n'.join([f"{i}. {sugg['suggestion']}" 
+                                                           for i, sugg in enumerate(result['suggestions'], 1)])
+                                    responses.append(await self.formatter.format_response(
+                                        content=suggestions,
+                                        template_key='suggestion',
+                                        detected_lang=detected_lang
+                                    ))
                                 elif 'insights' in result:
-                                    responses.append("Analysis Results:")
-                                    for key, value in result['insights'].items():
-                                        responses.append(f"{key}: {value}")
+                                    insights = '\n'.join([f"{key}: {value}" 
+                                                        for key, value in result['insights'].items()])
+                                    responses.append(await self.formatter.format_response(
+                                        content=insights,
+                                        template_key='analysis',
+                                        detected_lang=detected_lang
+                                    ))
                                 elif 'results' in result:
-                                    responses.append(f"Found {len(result['results'])} messages:")
-                                    for msg in result['results'][:5]:
-                                        responses.append(f"- {msg['content']}")
+                                    search_results = f"找到 {len(result['results'])} 条消息：\n" + \
+                                                    '\n'.join([f"- {msg['content']}" 
+                                                              for msg in result['results'][:5]])
+                                    responses.append(await self.formatter.format_response(
+                                        content=search_results,
+                                        template_key='search_result',
+                                        detected_lang=detected_lang
+                                    ))
                                 else:
-                                    responses.append(result.get('message', 'Operation completed'))
+                                    responses.append(await self.formatter.format_response(
+                                        content=result.get('message', '操作已完成'),
+                                        detected_lang=detected_lang
+                                    ))
                             else:
                                 responses.append(f"Error: {result.get('message', 'Operation failed')}")
                                 
