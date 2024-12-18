@@ -121,3 +121,8 @@ class Config:
         
 # Create global config instance
 config = Config()
+from utils.config import config
+
+# Access configurations
+azure_config = config.get_azure_config()
+cache_config = config.get_cache_config()
