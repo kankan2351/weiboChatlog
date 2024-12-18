@@ -19,16 +19,30 @@ logger = get_logger(__name__)
 
 class AIInterface(BaseHandler):
     def __init__(self, config):
-        """Initialize AI interface with all components"""
+        """初始化 AI 接口及所有组件"""
         super().__init__(db_path=config.get_db_config()['sqlite_db_path'])
         
-        # Initialize OpenAI client
+        # 初始化 OpenAI 客户端
         azure_config = config.get_azure_config()
         self.client = AzureOpenAI(
             azure_endpoint=azure_config['openai_endpoint'],
             api_key=azure_config['openai_key'],
             api_version=azure_config['api_version']
         )
+        
+        # 初始化核心组件
+        self.message_db = MessageDB(config.get_db_config()['vector_db_path'])
+        self.token_manager = TokenManager()
+        self.cache = SummaryCache(RedisClient(**config.get_cache_config()))
+        
+        # 初始化语言处理
+        self.lang_detector = LanguageDetector(self.cache)
+        self.templates = TemplateManager()
+        self.formatter = ResponseFormatter(self.lang_detector, self.templates)
+        
+        # 初始化消息处理
+        self.chunker = MessageChunker(self.token_manager, self.cache)
+        self.summarizer = RecursiveSummarizer(self.token_manager, self.cache)
         
         # Initialize components
         self.message_db = MessageDB(config.get_db_config()['vector_db_path'])
