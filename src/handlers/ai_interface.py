@@ -403,3 +403,13 @@ class AIInterface(BaseHandler):
                 "success": False,
                 "message": str(e)
             }
+[
+    {
+        "command_name": "Editor.edit_file_by_replace",
+        "args": {
+            "file_name": "src/cli.py",
+            "to_replace": "from ai_handler import AIHandler",
+            "new_content": "from handlers.ai_interface import AIInterface\nfrom utils.config import config"
+        }
+    }
+]
