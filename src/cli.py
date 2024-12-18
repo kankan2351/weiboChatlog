@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from ai_handler import AIHandler
+from handlers.ai_interface import AIInterface
 from utils.config import config
 from utils.logger import get_logger
 
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class ChatBotCLI:
     def __init__(self):
         """Initialize ChatBot CLI interface"""
-        self.ai_handler = AIHandler()
+        self.ai_handler = AIInterface(config)
         
     async def summarize(self, args: argparse.Namespace) -> None:
         """Handle chat history summarization"""
