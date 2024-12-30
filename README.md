@@ -7,7 +7,6 @@ A smart chatbot system for monitoring and interacting with Weibo group chats.
 - 微博群聊消息监控和自动回复
 - 命令行交互模式
 - 历史消息上下文支持
-- Emoji 字符处理
 - 数据持久化存储
 
 ## Requirements
@@ -20,7 +19,7 @@ A smart chatbot system for monitoring and interacting with Weibo group chats.
 1. 克隆仓库
 2. 安装依赖：
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 3. 复制 `.env.example` 到 `.env` 并填写配置
 
