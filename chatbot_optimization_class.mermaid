@@ -26,9 +26,7 @@ classDiagram
 
     class LanguageHandler {
         -detector: LanguageDetector
-        -formatter: ResponseFormatter
         +detect_lang(text: str) str
-        +format_response(content: str, lang: str) str
         -get_template(key: str, lang: str) str
     }
 

@@ -146,12 +146,6 @@ def detect_language(text: str) -> str:
     """语言检测"""
     pass
 
-def format_response(
-    content: str,
-    target_lang: str
-) -> str:
-    """响应格式化"""
-    pass
 ```
 
 ## 5. 验收标准

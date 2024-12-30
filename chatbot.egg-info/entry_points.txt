@@ -1,0 +1,3 @@
+[console_scripts]
+chatbot = chatbot.main:main
+chatbot-cli = chatbot.cli:main

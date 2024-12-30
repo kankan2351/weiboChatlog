@@ -1,0 +1,136 @@
+Metadata-Version: 2.1
+Name: chatbot
+Version: 1.0.0
+Summary: Enhanced chatbot system with summarization and analytics
+Home-page: https://github.com/yourusername/chatbot
+Author: ChatBot Team
+Author-email: team@chatbot.example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: openai>=1.0.0
+Requires-Dist: chromadb>=0.4.0
+Requires-Dist: redis>=5.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: selenium>=4.0.0
+Requires-Dist: requests>=2.0.0
+Requires-Dist: webdriver_manager>=4.0.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: numpy>=1.0.0
+Requires-Dist: textblob>=0.0.0
+Requires-Dist: sentence-transformers>=2.0.0
+Requires-Dist: torch>=2.0.0
+Requires-Dist: aiohttp>=3.0.0
+Requires-Dist: asyncio>=3.4.3
+Requires-Dist: python-dateutil>=2.0.0
+Requires-Dist: typing-extensions>=4.0.0
+Requires-Dist: tiktoken
+Requires-Dist: langdetect
+
+# Enhanced ChatBot CLI
+
+## Overview
+This is a command-line interface for the enhanced chatbot system, providing access to all new features including summarization, search, suggestions, and analytics.
+
+## Requirements
+- Python 3.8+
+- Redis server running (for caching)
+- Azure OpenAI API credentials
+
+## Installation
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Copy `.env.example` to `.env` and fill in your configuration
+
+## Configuration
+Create a `.env` file with the following settings (see `.env.example` for template).
+
+## Commands
+
+### Chat Mode
+Interactive chat mode with the bot:
+```bash
+python cli.py chat
+```
+
+### Summarize Chat History
+Generate summary of chat messages:
+```bash
+# Brief summary of last 24 hours
+python cli.py summarize --time-range 24h --type brief
+
+# Detailed summary of last 7 days
+python cli.py summarize --time-range 7d --type detailed
+
+# Topic-based summary of last 30 days
+python cli.py summarize --time-range 30d --type topics
+```
+
+### Search Messages
+Search through chat history:
+```bash
+# Search in all messages
+python cli.py search "关键词"
+
+# Search with time range
+python cli.py search "关键词" --time-range 7d
+```
+
+### Get Suggestions
+Get AI suggestions for questions:
+```bash
+python cli.py suggest "如何优化项目性能？"
+```
+
+### Analyze Chat Activity
+Generate insights from chat data:
+```bash
+# Analyze last 7 days activity
+python cli.py analyze --time-range 7d
+
+# Analyze last 30 days activity
+python cli.py analyze --time-range 30d
+```
+
+## Integration with Weibo Monitor
+
+原有的微博监控功能保持不变，可以通过运行：
+```bash
+python main.py
+```
+
+监控程序会自动集成新增的AI功能，包括：
+- 历史内容总结
+- 内容搜索
+- 智能建议
+- 活动分析
+
+## Development
+
+### Project Structure
+```
+├── src/
+│   ├── summarizer/       # 历史总结模块
+│   ├── search/          # 内容搜索模块
+│   ├── advisor/         # 建议生成模块
+│   ├── analytics/       # 数据分析模块
+│   ├── utils/           # 工具函数
+│   ├── cli.py          # 命令行接口
+│   └── main.py         # 微博监控入口
+```
+
+### Adding New Features
+1. 在相应模块目录下创建新的功能文件
+2. 在 `ai_handler.py` 中注册新功能
+3. 在 `cli.py` 中添加命令行接口
+4. 更新文档和测试用例
