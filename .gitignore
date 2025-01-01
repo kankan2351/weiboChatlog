@@ -47,3 +47,5 @@ test-results/
 *.user
 *.code-workspace
 pnpm-lock.yaml
+chroma_db/*
+data/*
