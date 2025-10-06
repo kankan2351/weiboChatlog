@@ -33,7 +33,7 @@ chatbot/
 ### 方式一：本地/服务器手动部署
 1. **克隆代码库**
    ```bash
-   git clone https://github.com/your-org/weiboChatlog.git
+   git clone https://github.com/kankan2351/weiboChatlog.git
    cd weiboChatlog
    ```
 2. **准备 Python 环境**（推荐使用虚拟环境）
