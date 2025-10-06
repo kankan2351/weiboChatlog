@@ -38,7 +38,7 @@ chatbot/
    ```
 2. **准备 Python 环境**（推荐使用虚拟环境）
    ```bash
-   python -m venv .venv
+   python3 -m venv .venv
    source .venv/bin/activate  # Windows 使用 .venv\\Scripts\\activate
    pip install --upgrade pip
    pip install -e .
@@ -160,6 +160,7 @@ chatbot/
 ## 常见问题与排查
 | 问题 | 解决方案 |
 | --- | --- |
+| `python` 命令找不到或提示 "externally-managed-environment" | 使用 `python3 -m venv .venv` 创建虚拟环境后再激活；若系统未安装 `python3-venv`，可先通过包管理器安装。不要直接在系统环境中运行 `pip install`。 |
 | 浏览器版本不匹配 | 重新安装匹配版本的 Chromium 与 Chromedriver，或在 Docker 中重新构建镜像。 |
 | 无法打开图形界面（策略 A） | 检查 `xhost +local:docker` 是否执行，`DISPLAY` 与 `/tmp/.X11-unix` 是否正确挂载。 |
 | VNC 无法连接（策略 B） | 确认服务器防火墙放行 5901 端口，可为 x11vnc 配置密码。 |
