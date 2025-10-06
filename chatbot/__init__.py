@@ -1,20 +1,20 @@
-"""
-Enhanced Chatbot System with Summarization and Analytics
-"""
+"""Top level package for the chatbot project."""
 
 __version__ = "1.0.0"
 
-from chatbot.handlers.ai_interface import AIInterface
 from chatbot.utils.config import config
 from chatbot.utils.logger import get_logger
 
-# Public API
 __all__ = [
-    'AIInterface',
-    'config',
-    'get_logger',
+    "__version__",
+    "config",
+    "get_logger",
+    "get_ai_interface",
 ]
 
-# Initialize configuration and logging
-config.load()
-logger = get_logger(__name__)
+
+def get_ai_interface(*args, **kwargs):
+    """Factory that defers importing heavy dependencies until needed."""
+    from chatbot.handlers.ai_interface import AIInterface
+
+    return AIInterface(*args, **kwargs)
