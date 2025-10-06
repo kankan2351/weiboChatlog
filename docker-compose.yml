@@ -1,0 +1,32 @@
+version: "3.9"
+
+x-cocoonchat-base: &cocoonchat-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - .env
+  environment:
+    WEIBO_COOKIES_PATH: /app/cookies/weibo_cookies.json
+  volumes:
+    - ./data:/app/data
+    - ./logs:/app/logs
+    - ./persist/chroma_db:/app/chroma_db
+    - ./persist/cookies:/app/cookies
+  shm_size: "2g"
+
+services:
+  monitor:
+    <<: *cocoonchat-base
+    container_name: cocoonchat-monitor
+    command: ["python", "-m", "chatbot.main", "--monitor"]
+    restart: unless-stopped
+
+  cli:
+    <<: *cocoonchat-base
+    container_name: cocoonchat-cli
+    command: ["python", "-m", "chatbot.main"]
+    profiles: ["cli"]
+    stdin_open: true
+    tty: true
+    restart: "no"
