@@ -1,102 +1,175 @@
 # CocoonChat
 
-A smart chatbot system for monitoring and interacting with Weibo group chats.
+CocoonChat 是一个面向微博群聊的智能助手，既能 7×24 小时守护群聊，也支持在命令行中与您持续对话。项目内置消息持久化、上下文管理、自动回复、日志采集等能力，可用于快速搭建面向微博社区的自动化助手。
 
-## Overview
-这是一个增强版的聊天机器人系统，支持微博群聊监控和命令行交互模式。主要功能包括：
-- 微博群聊消息监控和自动回复
-- 命令行交互模式
-- 历史消息上下文支持
-- 数据持久化存储
+## 核心能力
+- **微博群聊监控与自动回复**：接入指定群聊，轮询消息，识别 @ 机器人请求并通过大模型生成回复。
+- **命令行对话模式**：直接在终端中与机器人交流，保留上下文，适合调试和灰度测试。
+- **持久化与检索**：消息会同时写入 SQLite、Chroma 向量库以及处理记录文件，方便后续分析与问答。
+- **自动化运维支持**：日志、数据库、Cookies 均可持久化到宿主机目录；提供 Docker 化方案支持快速部署与一键重启。
 
-## Requirements
-- Python 3.8+
-- Chrome 浏览器
-- SQLite3
-- OpenAI API 访问权限
+## 依赖要求
+| 组件 | 说明 |
+| --- | --- |
+| Python | 3.8 及以上版本 |
+| 浏览器 | Chrome / Chromium，与 Chromedriver 版本匹配 |
+| 数据库 | 内置 SQLite3；无需额外安装服务器 |
+| 大模型接口 | OpenAI / Azure OpenAI / DeepSeek 等兼容 OpenAI 协议的接口 |
 
-## Installation
-1. 克隆仓库
-2. 安装依赖：
-   ```bash
-   pip install -e .
-   ```
-3. 复制 `.env.example` 到 `.env` 并填写配置
+> 💡 项目通过 `.env` 文件读取敏感配置，`Config` 类会在启动时校验必填项并自动创建 `data`、`logs` 等目录。
 
-## Configuration
-在 `.env` 文件中配置以下信息：
-```ini
-# OpenAI API 配置
-OPENAI_API_KEY=your_api_key
-OPENAI_BASE_URL=your_base_url
-
-
-```
-
-## Usage
-
-### 命令行交互模式
-直接与机器人对话：
-```bash
-python -m chatbot.main
-```
-
-### 微博监控模式
-启动微博群聊监控：
-```bash
-python -m chatbot.main --monitor
-```
-
-## Features
-
-### 微博群聊监控
-- 自动监控指定群聊消息
-- 处理 @ 机器人的消息
-- 自动回复支持多行文本
-
-### 命令行交互
-- 直接在命令行与机器人对话
-- 支持 'quit' 命令退出
-- 保持历史对话上下文
-
-### 数据存储
-- 使用 SQLite 存储消息历史
-- 支持消息检索和上下文分析
-
-## Project Structure
+## 目录结构
 ```
 chatbot/
-├── main.py          # 主入口文件
-├── handlers/        # 处理器模块
-│   └── ai_interface.py
-├── weibo/          # 微博相关模块
-│   └── monitor.py
-├── db/             # 数据库模块
-│   └── sqlite_db.py
-└── utils/          # 工具模块
-    ├── config.py
-    └── logger.py
+├── main.py                # 入口脚本，支持 CLI 和 monitor 两种模式
+├── weibo/monitor.py       # 微博群监控与 Selenium 登录流程
+├── handlers/              # AI 回复、消息处理逻辑
+├── db/sqlite_db.py        # SQLite 数据访问层
+├── utils/config.py        # 配置解析与目录初始化
+└── ...
 ```
 
-## Development
+## 部署方式
+### 方式一：本地/服务器手动部署
+1. **克隆代码库**
+   ```bash
+   git clone https://github.com/your-org/weiboChatlog.git
+   cd weiboChatlog
+   ```
+2. **准备 Python 环境**（推荐使用虚拟环境）
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows 使用 .venv\\Scripts\\activate
+   pip install --upgrade pip
+   pip install -e .
+   ```
+3. **配置环境变量**
+   ```bash
+   cp .env.example .env
+   # 按需填写 OPENAI / AZURE / DEEPSEEK / WEIBO 相关参数
+   ```
+4. **安装 Chrome 与 Chromedriver**：确保两者版本一致；Linux 可以通过包管理器安装 `chromium` 与 `chromium-driver`。
+5. **首次运行并登录微博**
+   ```bash
+   python -m chatbot.main --monitor
+   ```
+   终端会唤起浏览器窗口，手动完成登录后，Cookies 会缓存到 `./data` 目录。
 
-### 添加新功能
-1. 在相应模块目录下创建新文件
-2. 在 `main.py` 中注册新功能
-3. 更新文档和测试
+### 方式二：Docker 化部署
+项目提供多阶段 `Dockerfile` 与 `docker-compose.yml`，用于快速构建镜像并持久化运行数据。
 
-### 调试
-- 使用命令行模式进行功能测试
-- 查看日志文件了解运行状态
-- 使用 SQLite 客户端查看数据
+1. **准备持久化目录**（只需执行一次）
+   ```bash
+   mkdir -p data logs persist/chroma_db persist/cookies
+   ```
+2. **复制并填写配置**
+   ```bash
+   cp .env.example .env
+   # 编辑 .env，确保配置齐全
+   ```
+3. **构建镜像**
+   ```bash
+   docker compose build
+   ```
+4. **处理首次登录**（必须选择以下策略之一，获取可复用的微博 Cookies）
+   - **策略 A：本地 GUI 登录后上传 Cookies**
+     1. 在本地（有图形界面）执行：
+        ```bash
+        xhost +local:docker  # 允许容器访问本地显示
+        docker compose run --rm \
+          -e RUN_HEADFUL=true \
+          -e DISPLAY=$DISPLAY \
+          -v /tmp/.X11-unix:/tmp/.X11-unix \
+          monitor python docker/save_cookies.py
+        ```
+     2. 在弹出的 Chromium 窗口中登录微博，成功后 `persist/cookies/weibo_cookies.json` 会生成。
+     3. 将该文件安全地上传到服务器 `persist/cookies/` 目录。
+   - **策略 B：服务器端一次性 VNC 登录**
+     1. 在服务器上运行：
+        ```bash
+        docker compose run --rm -p 5901:5901 -e RUN_HEADFUL=true monitor \
+          bash -lc '\
+            Xvfb :99 -screen 0 1920x1080x24 & \
+            fluxbox -display :99 & \
+            x11vnc -display :99 -forever -shared -rfbport 5901 -nopw & \
+            DISPLAY=:99 python docker/save_cookies.py \
+          '
+        ```
+     2. 使用 VNC 客户端连接 `服务器IP:5901`，完成微博登录。
+     3. 登录成功后退出容器，Cookies 会保留在共享卷 `persist/cookies/`。
+5. **启动服务**
+   ```bash
+   # 监控模式常驻后台运行
+   docker compose up -d monitor
 
-## Troubleshooting
-- 如果遇到导入错误，确保使用 `python -m chatbot.main` 运行
-- 如果消息发送失败，检查 Chrome 版本和 ChromeDriver 是否匹配
-- 如果数据库访问出错，检查权限和路径配置
+   # 按需开启 CLI 会话（使用 profile，退出后容器即销毁）
+   docker compose run --rm --profile cli cli
+   ```
+6. **查看运行状态**
+   ```bash
+   docker compose logs -f monitor
+   ```
 
-## Contributing
-欢迎提交 Pull Request 或提出 Issue。
+> `docker-compose.yml` 默认挂载以下卷：
+> - `./data -> /app/data`
+> - `./logs -> /app/logs`
+> - `./persist/chroma_db -> /app/chroma_db`
+> - `./persist/cookies -> /app/cookies`
+> 
+> 并通过 `.env` 注入所需环境变量，敏感信息不会硬编码进镜像。
 
-## License
-MIT License
+## 使用指南
+### 1. 命令行模式
+- 本地运行：
+  ```bash
+  python -m chatbot.main
+  ```
+- Docker 环境：
+  ```bash
+  docker compose run --rm --profile cli cli
+  ```
+  在 CLI 中输入内容即可与机器人对话，输入 `quit` 退出。
+
+### 2. 微博监控模式
+- 本地运行：
+  ```bash
+  python -m chatbot.main --monitor
+  ```
+- Docker 环境：
+  ```bash
+  docker compose up -d monitor
+  docker compose logs -f monitor
+  ```
+  日志中出现“polling new messages”或 AI 回复内容，即表示监控已生效。
+
+### 3. 数据位置
+| 数据类型 | 默认路径 |
+| --- | --- |
+| 处理过的消息 ID | `./data/processed_messages.json` |
+| Chroma 向量库 | `./persist/chroma_db/` |
+| SQLite 数据库 | `./data/chatbot.db` |
+| 日志文件 | `./logs/` |
+| 微博 Cookies | `./persist/cookies/weibo_cookies.json` |
+
+### 4. 常用运维操作
+- **重启监控**：`docker compose restart monitor`
+- **更新镜像**：`git pull && docker compose build --no-cache`
+- **清理容器**：`docker compose down`
+- **定时运行**：可结合 `systemd`、`cron` 或容器编排平台进一步自动化。
+
+## 常见问题与排查
+| 问题 | 解决方案 |
+| --- | --- |
+| 浏览器版本不匹配 | 重新安装匹配版本的 Chromium 与 Chromedriver，或在 Docker 中重新构建镜像。 |
+| 无法打开图形界面（策略 A） | 检查 `xhost +local:docker` 是否执行，`DISPLAY` 与 `/tmp/.X11-unix` 是否正确挂载。 |
+| VNC 无法连接（策略 B） | 确认服务器防火墙放行 5901 端口，可为 x11vnc 配置密码。 |
+| Cookies 过期 | 再次执行任一登录策略覆盖 `weibo_cookies.json`。 |
+| 数据未持久化 | 确保宿主机目录存在且拥有读写权限。 |
+
+## 后续维护建议
+- 定期同步 Chromium 与 Chromedriver 版本，避免 Selenium 报错。
+- 监控日志目录容量，必要时接入日志聚合平台。
+- 结合 `tests/` 目录下的单元测试与 `pytest`，在修改逻辑后快速回归验证。
+
+## 许可证
+本项目基于 MIT License 开源，详情见仓库内 `LICENSE` 文件。
