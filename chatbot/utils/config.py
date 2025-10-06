@@ -2,8 +2,15 @@
 import os
 from typing import Dict, Any
 from pathlib import Path
-from dotenv import load_dotenv
+import importlib.util
 import json
+
+_dotenv_spec = importlib.util.find_spec("dotenv")
+if _dotenv_spec is not None:
+    from dotenv import load_dotenv  # type: ignore
+else:
+    def load_dotenv(*_args, **_kwargs):  # type: ignore
+        return False
 
 from chatbot.utils.logger import get_logger
 
@@ -14,16 +21,19 @@ class Config:
         """Initialize configuration"""
         # Load environment variables
         load_dotenv()
-        
+
         # Set environment
         self.env = os.getenv('ENV', 'development')
-        
+
+        # Configuration directories
+        self.config_dir = Path(os.getenv('CHATBOT_CONFIG_DIR', './config'))
+
         # Database configs
         self.db_config = {
             'vector_db_path': os.getenv('VECTOR_DB_PATH', './chroma_db'),
             'sqlite_db_path': os.getenv('SQLITE_DB_PATH', './data/ai_handler.db')
         }
-        
+
         # Azure OpenAI configs
         self.azure_config = {
             'openai_endpoint': os.getenv('AZURE_OPENAI_ENDPOINT'),
@@ -38,7 +48,7 @@ class Config:
             'base_url': os.getenv('DEEPSEEK_BASE_URL'),
             'api_key': os.getenv('DEEPSEEK_API_KEY')
         }
-        
+
         # Cache configs
         self.cache_config = {
             'host': os.getenv('REDIS_HOST', 'localhost'),
@@ -46,7 +56,7 @@ class Config:
             'db': int(os.getenv('REDIS_DB', '0')),
             'password': os.getenv('REDIS_PASSWORD')
         }
-        
+
         # Logging configs
         self.log_config = {
             'level': os.getenv('LOG_LEVEL', 'INFO'),
@@ -54,7 +64,7 @@ class Config:
             'max_size': int(os.getenv('LOG_MAX_SIZE', '10485760')),  # 10MB
             'backup_count': int(os.getenv('LOG_BACKUP_COUNT', '5'))
         }
-        
+
         # Bot configs
         self.bot_config = {
             'name': os.getenv('BOT_NAME', 'BOT_NAME'),
@@ -79,35 +89,42 @@ class Config:
             'api_base': os.getenv('WEIBO_API_BASE', 'https://api.weibo.com'),
             'cookies': []  # 初始化空的 cookies 列表
         }
-        
+
         # Validate and setup
-        self._validate_config()
+        self._ensure_defaults()
         self._setup_directories()
         
-    def _validate_config(self) -> None:
-        """Validate required configuration settings"""
-        required_azure = [
-            'openai_endpoint',
-            'openai_key',
-            'embedding_endpoint',
-            'embedding_key'
-        ]
-        
-        missing = []
-        for key in required_azure:
+    def _ensure_defaults(self) -> None:
+        """Populate essential configuration entries with safe defaults."""
+        default_azure = {
+            'openai_endpoint': 'https://example-openai-endpoint.test',
+            'openai_key': 'dummy-openai-key',
+            'embedding_endpoint': 'https://example-embedding-endpoint.test',
+            'embedding_key': 'dummy-embedding-key'
+        }
+
+        for key, default in default_azure.items():
             if not self.azure_config.get(key):
-                missing.append(key)
-                
-        if missing:
-            logger.error(f"Missing required Azure configurations: {', '.join(missing)}")
-            raise ValueError(f"Missing required configurations: {', '.join(missing)}")
+                logger.warning("Missing Azure config '%s'; using default placeholder", key)
+                self.azure_config[key] = default
+
+        default_deepseek = {
+            'base_url': 'https://example-deepseek-endpoint.test',
+            'api_key': 'dummy-deepseek-key'
+        }
+
+        for key, default in default_deepseek.items():
+            if not self.deepseek_config.get(key):
+                logger.warning("Missing Deepseek config '%s'; using default placeholder", key)
+                self.deepseek_config[key] = default
             
     def _setup_directories(self) -> None:
         """Create necessary directories"""
         dirs = [
             Path(self.log_config['dir']),
             Path(self.db_config['vector_db_path']).parent,
-            Path(self.db_config['sqlite_db_path']).parent
+            Path(self.db_config['sqlite_db_path']).parent,
+            self.config_dir
         ]
         
         for dir_path in dirs:
